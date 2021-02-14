@@ -3,36 +3,46 @@
 
 #include <vector>
 #include "Eigen/Dense"
+#include <boost/format.hpp>
+#include <iostream>
 
 static Eigen::IOFormat HeavyFmt;
 
-#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#define LOG(fmt, ...) std::cout << (boost::format(std::string("%s:%s - ") + fmt) % __FILENAME__ % __LINE__ % __VA_ARGS__).str() << std::endl;
-
 class Tools {
 public:
-    /**
-     * Constructor.
-     */
-    Tools();
-
-    /**
-     * Destructor.
-     */
-    virtual ~Tools();
 
     /**
      * A helper method to calculate RMSE.
      */
-    Eigen::VectorXd CalculateRMSE(const std::vector<Eigen::VectorXd> &estimations,
-                                  const std::vector<Eigen::VectorXd> &ground_truth);
+    static Eigen::Vector4d CalculateRMSE(const std::vector<Eigen::Vector4d> &estimations,
+                                         const std::vector<Eigen::Vector4d> &ground_truth);
+
 
     /**
      * A helper method to calculate Jacobians.
      */
-    Eigen::MatrixXd CalculateJacobian(const Eigen::VectorXd& x_state);
+    static Eigen::Matrix<double, 3, 4> CalculateJacobian(const Eigen::VectorXd& x_state);
 
+    static Eigen::Vector3d ConvertCartesianToPolar(const Eigen::Vector4d &state) {
+        const double p_norm = state.topRows<2>().norm();
+        return {
+            p_norm,
+            std::atan2(state[1], state[0]),
+            static_cast<double>(state.topRows<2>().transpose() * state.bottomRows<2>()) / p_norm
+        };
+    }
 
+    static Eigen::Vector4d ConvertPolarToCartesian(const Eigen::Vector3d &measurement) {
+        const double rho = measurement[0];
+        const double phi = measurement[1];
+        const double rho_dot = measurement[2];
+        return {
+            std::cos(phi) * rho,
+            std::sin(phi) * rho,
+            std::cos(phi) * rho_dot,
+            std::sin(phi) * rho_dot
+        };
+    }
 };
 
 
