@@ -34,6 +34,23 @@ public:
     KalmanFilter ekf_;
 
 private:
+
+    template <MeasurementPackage::SensorType T>
+    void _Update(const MeasurementPackage &measurement_pack);
+
+    template <>
+    void _Update<MeasurementPackage::SensorType::RADAR>(const MeasurementPackage &measurement_pack) {
+        ekf_.R_ = R_radar_;
+        ekf_.UpdateEKF(measurement_pack.raw_measurements_);
+    }
+
+    template <>
+    void _Update<MeasurementPackage::SensorType::LASER>(const MeasurementPackage &measurement_pack) {
+        ekf_.R_ = R_laser_;
+        ekf_.H_ = H_laser_;
+        ekf_.Update(measurement_pack.raw_measurements_);
+    }
+
     // check whether the tracking toolbox was initialized or not (first measurement)
     bool is_initialized_;
 
