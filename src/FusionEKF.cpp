@@ -50,16 +50,19 @@ void FusionEKF::EnsureInitialization(const MeasurementPackage &measurement_pack)
         ekf_.Q_ = Eigen::Matrix4d::Zero();
         ekf_.x_ = Eigen::Vector4d::Ones();
         ekf_.P_ = Eigen::Matrix4d::Identity();
-        ekf_.P_(1, 2) = 1000.0;
-        ekf_.P_(2, 3) = 1000.0;
 
         switch (measurement_pack.sensor_type_) {
             case MeasurementPackage::RADAR:
                 ekf_.x_ = Tools::ConvertPolarToCartesian(measurement_pack.raw_measurements_);
+                ekf_.R_ = R_radar_;
+                ekf_.UpdateEKF(measurement_pack.raw_measurements_);
                 break;
             case MeasurementPackage::LASER:
                 ekf_.x_[0] = measurement_pack.raw_measurements_[0];
                 ekf_.x_[1] = measurement_pack.raw_measurements_[1];
+                ekf_.R_ = R_laser_;
+                ekf_.H_ = H_laser_;
+                ekf_.Update(measurement_pack.raw_measurements_);
                 break;
             default:
                 throw std::runtime_error("Not supported sensor type");
